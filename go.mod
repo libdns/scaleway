@@ -1,4 +1,4 @@
-module github.com/libdns/digitalocean
+module github.com/libdns/scaleway
 
 go 1.19
 
