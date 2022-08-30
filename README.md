@@ -10,8 +10,7 @@ DNS records.
 
 To authenticate you need to supply following Scaleway credentials:
 
-- The Scaleway access key
-- The Scaleway secret key
+- The Scaleway secret key (aka API key)
 - The Scaleway organization ID
 
 ## Example
@@ -32,11 +31,6 @@ import (
 )
 
 func main() {
-	accessKey := os.Getenv("ACCESS_KEY")
-	if accessKey == "" {
-		fmt.Printf("ACCESS_KEY not set\n")
-		return
-	}
 	secretKey := os.Getenv("SECRET_KEY")
 	if secretKey == "" {
 		fmt.Printf("SECRET_KEY not set\n")
