@@ -20,7 +20,7 @@ func (p *Provider) getClient() error {
 	if p.client == nil {
 		var err error
 		p.client, err = scw.NewClient(
-			scw.WithAuth(p.AccessKey, p.SecretKey),
+			scw.WithAuth("SCWXXXXXXXXXXXXXXXXX", p.SecretKey),
 			scw.WithDefaultOrganizationID(p.OrganizationID),
 		)
 		if err != nil {
