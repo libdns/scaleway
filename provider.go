@@ -10,9 +10,9 @@ import (
 
 type Provider struct {
 	Client
-	AccessKey      string `json:"accessKey,omitempty"`
-	SecretKey      string `json:"secretKey,omitempty"`
-	OrganizationID string `json:"organizationID,omitempty"`
+	AccessKey      string `json:"access_key,omitempty"`
+	SecretKey      string `json:"secret_key,omitempty"`
+	OrganizationID string `json:"organization_id,omitempty"`
 }
 
 func (p *Provider) unFQDN(fqdn string) string {
