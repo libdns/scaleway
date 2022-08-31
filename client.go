@@ -2,7 +2,6 @@ package scaleway
 
 import (
 	"context"
-	"strings"
 	"sync"
 	"time"
 
@@ -51,7 +50,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 
 	for _, entry := range zoneRecords.Records {
 		record := libdns.Record{
-			Name:  entry.Name + "." + strings.Trim(zone, ".") + ".",
+			Name:  libdns.RelativeName(entry.Name, zone),
 			Value: entry.Data,
 			Type:  string(entry.Type),
 			TTL:   time.Duration(entry.TTL) * time.Second,
@@ -79,7 +78,7 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 				Add: &domain.RecordChangeAdd{
 					Records: []*domain.Record{
 						{
-							Name: strings.Trim(strings.ReplaceAll(record.Name, zone, ""), "."),
+							Name: libdns.AbsoluteName(record.Name, zone),
 							Data: record.Value,
 							Type: domain.RecordType(record.Type),
 							TTL:  uint32(record.TTL.Seconds()),
@@ -138,7 +137,7 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 					ID: &record.ID,
 					Records: []*domain.Record{
 						{
-							Name: strings.Trim(strings.ReplaceAll(record.Name, zone, ""), "."),
+							Name: libdns.AbsoluteName(record.Name, zone),
 							Data: record.Value,
 							Type: domain.RecordType(record.Type),
 							TTL:  uint32(record.TTL.Seconds()),
