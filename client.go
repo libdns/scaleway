@@ -91,7 +91,9 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 	if err != nil {
 		return record, err
 	}
-	record.ID = records.Records[0].ID
+	if len(records.Records) > 0 {
+		record.ID = records.Records[0].ID
+	}
 	return record, nil
 }
 
