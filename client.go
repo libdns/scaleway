@@ -59,7 +59,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 
 	for _, entry := range zoneRecords.Records {
 		rr := libdns.RR{
-			Name: libdns.RelativeName(entry.Name, zone),
+			Name: entry.Name,
 			Type: string(entry.Type),
 			Data: entry.Data,
 			TTL:  time.Duration(entry.TTL) * time.Second,
@@ -92,7 +92,7 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 				Add: &domain.RecordChangeAdd{
 					Records: []*domain.Record{
 						{
-							Name: libdns.AbsoluteName(rr.Name, zone),
+							Name: rr.Name,
 							Type: domain.RecordType(rr.Type),
 							Data: rr.Data,
 							TTL:  uint32(rr.TTL.Seconds()),
@@ -126,7 +126,7 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 			{
 				Delete: &domain.RecordChangeDelete{
 					IDFields: &domain.RecordIdentifier{
-						Name: libdns.AbsoluteName(rr.Name, zone),
+						Name: rr.Name,
 						Type: domain.RecordType(rr.Type),
 						Data: &rr.Data,
 						TTL:  scw.Uint32Ptr(uint32(rr.TTL.Seconds())),
@@ -159,14 +159,14 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 			{
 				Set: &domain.RecordChangeSet{
 					IDFields: &domain.RecordIdentifier{
-						Name: libdns.AbsoluteName(rr.Name, zone),
+						Name: rr.Name,
 						Type: domain.RecordType(rr.Type),
 						Data: &rr.Data,
 						TTL:  scw.Uint32Ptr(uint32(rr.TTL.Seconds())),
 					},
 					Records: []*domain.Record{
 						{
-							Name: libdns.AbsoluteName(rr.Name, zone),
+							Name: rr.Name,
 							Type: domain.RecordType(rr.Type),
 							Data: rr.Data,
 							TTL:  uint32(rr.TTL.Seconds()),
