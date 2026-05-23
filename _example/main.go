@@ -16,9 +16,9 @@ func main() {
 		fmt.Printf("SECRET_KEY not set\n")
 		return
 	}
-	organisationID := os.Getenv("ORGANISATION_ID")
-	if organisationID == "" {
-		fmt.Printf("ORGANISATION_ID not set\n")
+	organizationID := os.Getenv("ORGANIZATION_ID")
+	if organizationID == "" {
+		fmt.Printf("ORGANIZATION_ID not set\n")
 		return
 	}
 	zone := os.Getenv("ZONE")
@@ -28,12 +28,13 @@ func main() {
 	}
 	provider := scaleway.Provider{
 		SecretKey:      secretKey,
-		OrganizationID: organisationID,
+		OrganizationID: organizationID,
 	}
 
 	records, err := provider.GetRecords(context.TODO(), zone)
 	if err != nil {
 		fmt.Printf("ERROR: %s\n", err.Error())
+		return
 	}
 
 	testName := "libdns-test"
@@ -66,6 +67,7 @@ func main() {
 		}})
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err.Error())
+			return
 		}
 	} else {
 		fmt.Printf("Creating new entry for %s\n", testName)
@@ -77,6 +79,7 @@ func main() {
 		}})
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err.Error())
+			return
 		}
 	}
 }
