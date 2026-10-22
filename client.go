@@ -52,7 +52,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 
 	zoneRecords, err := domainAPI.ListDNSZoneRecords(&domain.ListDNSZoneRecordsRequest{
 		DNSZone: zone,
-	}, scw.WithContext(ctx))
+	}, scw.WithContext(ctx), scw.WithAllPages())
 	if err != nil {
 		return nil, err
 	}
