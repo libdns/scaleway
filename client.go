@@ -50,10 +50,15 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 	}
 
 	for _, entry := range zoneRecords.Records {
+		data := entry.Data
+		// Scaleway wraps TXT values into a single pair of quotes, unescapped
+		if entry.Type == domain.RecordTypeTXT && len(data) >= 2 && data[0] == '"' && data[len(data)-1] == '"' {
+			data = data[1 : len(data)-1]
+		}
 		rr := libdns.RR{
 			Name: entry.Name,
 			Type: string(entry.Type),
-			Data: entry.Data,
+			Data: data,
 			TTL:  time.Duration(entry.TTL) * time.Second,
 		}
 		record, err := rr.Parse()
