@@ -30,14 +30,6 @@ func (p *Provider) getClient() error {
 	return nil
 }
 
-// convertRecord applies TTL conversion to a record.
-// Scaleway API uses TTL in seconds, libdns uses time.Duration.
-func convertRecord(record libdns.Record) (libdns.Record, error) {
-	rr := record.RR()
-	rr.TTL = time.Duration(rr.TTL) * time.Second
-	return rr.Parse()
-}
-
 func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Record, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -187,5 +179,5 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 	if err != nil {
 		return record, err
 	}
-	return convertRecord(record)
+	return record.RR().Parse()
 }
