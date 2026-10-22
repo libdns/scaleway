@@ -105,7 +105,7 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 	if err != nil {
 		return record, err
 	}
-	return convertRecord(record)
+	return record.RR().Parse()
 }
 
 func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdns.Record) (libdns.Record, error) {
@@ -119,18 +119,25 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 
 	rr := record.RR()
 
+	// Empty data + 0 TTL are wildcards (match any valie)
+	idFields := &domain.RecordIdentifier{
+		Name: rr.Name,
+		Type: domain.RecordType(rr.Type),
+	}
+	if rr.Data != "" {
+		idFields.Data = &rr.Data
+	}
+	if rr.TTL != 0 {
+		idFields.TTL = scw.Uint32Ptr(uint32(rr.TTL.Seconds()))
+	}
+
 	domainAPI := domain.NewAPI(p.client)
 	_, err = domainAPI.UpdateDNSZoneRecords(&domain.UpdateDNSZoneRecordsRequest{
 		DNSZone: zone,
 		Changes: []*domain.RecordChange{
 			{
 				Delete: &domain.RecordChangeDelete{
-					IDFields: &domain.RecordIdentifier{
-						Name: rr.Name,
-						Type: domain.RecordType(rr.Type),
-						Data: &rr.Data,
-						TTL:  scw.Uint32Ptr(uint32(rr.TTL.Seconds())),
-					},
+					IDFields: idFields,
 				},
 			},
 		},
@@ -138,7 +145,8 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 	if err != nil {
 		return record, err
 	}
-	return convertRecord(record)
+	// Not parsed again
+	return record, nil
 }
 
 func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdns.Record) (libdns.Record, error) {
