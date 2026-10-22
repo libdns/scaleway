@@ -30,14 +30,6 @@ func (p *Provider) getClient() error {
 	return nil
 }
 
-// convertRecord applies TTL conversion to a record.
-// Scaleway API uses TTL in seconds, libdns uses time.Duration.
-func convertRecord(record libdns.Record) (libdns.Record, error) {
-	rr := record.RR()
-	rr.TTL = time.Duration(rr.TTL) * time.Second
-	return rr.Parse()
-}
-
 func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Record, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
@@ -52,16 +44,21 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 
 	zoneRecords, err := domainAPI.ListDNSZoneRecords(&domain.ListDNSZoneRecordsRequest{
 		DNSZone: zone,
-	})
+	}, scw.WithContext(ctx), scw.WithAllPages())
 	if err != nil {
 		return nil, err
 	}
 
 	for _, entry := range zoneRecords.Records {
+		data := entry.Data
+		// Scaleway wraps TXT values into a single pair of quotes, unescapped
+		if entry.Type == domain.RecordTypeTXT && len(data) >= 2 && data[0] == '"' && data[len(data)-1] == '"' {
+			data = data[1 : len(data)-1]
+		}
 		rr := libdns.RR{
 			Name: entry.Name,
 			Type: string(entry.Type),
-			Data: entry.Data,
+			Data: data,
 			TTL:  time.Duration(entry.TTL) * time.Second,
 		}
 		record, err := rr.Parse()
@@ -101,11 +98,11 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 				},
 			},
 		},
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return record, err
 	}
-	return convertRecord(record)
+	return record.RR().Parse()
 }
 
 func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdns.Record) (libdns.Record, error) {
@@ -119,26 +116,34 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 
 	rr := record.RR()
 
+	// Empty data + 0 TTL are wildcards (match any valie)
+	idFields := &domain.RecordIdentifier{
+		Name: rr.Name,
+		Type: domain.RecordType(rr.Type),
+	}
+	if rr.Data != "" {
+		idFields.Data = &rr.Data
+	}
+	if rr.TTL != 0 {
+		idFields.TTL = scw.Uint32Ptr(uint32(rr.TTL.Seconds()))
+	}
+
 	domainAPI := domain.NewAPI(p.client)
 	_, err = domainAPI.UpdateDNSZoneRecords(&domain.UpdateDNSZoneRecordsRequest{
 		DNSZone: zone,
 		Changes: []*domain.RecordChange{
 			{
 				Delete: &domain.RecordChangeDelete{
-					IDFields: &domain.RecordIdentifier{
-						Name: rr.Name,
-						Type: domain.RecordType(rr.Type),
-						Data: &rr.Data,
-						TTL:  scw.Uint32Ptr(uint32(rr.TTL.Seconds())),
-					},
+					IDFields: idFields,
 				},
 			},
 		},
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return record, err
 	}
-	return convertRecord(record)
+	// Not parsed again
+	return record, nil
 }
 
 func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdns.Record) (libdns.Record, error) {
@@ -175,9 +180,9 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 				},
 			},
 		},
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return record, err
 	}
-	return convertRecord(record)
+	return record.RR().Parse()
 }
