@@ -52,7 +52,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 
 	zoneRecords, err := domainAPI.ListDNSZoneRecords(&domain.ListDNSZoneRecordsRequest{
 		DNSZone: zone,
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 				},
 			},
 		},
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return record, err
 	}
@@ -134,7 +134,7 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 				},
 			},
 		},
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return record, err
 	}
@@ -175,7 +175,7 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 				},
 			},
 		},
-	})
+	}, scw.WithContext(ctx))
 	if err != nil {
 		return record, err
 	}
